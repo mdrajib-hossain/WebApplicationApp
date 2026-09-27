@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -10,7 +14,6 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/WebApplication.styles.css" asp-append-version="true" />
 
-
     <style>
             /* Custom styles for sidebar toggling */
             #sidebar {
@@ -20,6 +23,7 @@
                 #sidebar.collapsed {
                     margin-left: -100%;
                 }
+
             @@media (min-width: 768px) {
                 #sidebar.collapsed {
                     margin-left: 0;
@@ -62,37 +66,76 @@
 
                 <!-- Navigation Links -->
                 <ul class="nav nav-pills flex-column mb-auto">
-                    
-
-                 
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="SalesMans" asp-action="SalesManEntry" title="SalesManSetup">
-                            <i class="bi bi-people me-2"></i><span class="sidebar-text">Seles Man Setup</span>
-                        </a>
-                    </li>
-                  
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="SalesMans" asp-action="SelesEntry" title="Seles Man  Wise Monthly Sales entry">
-                            <i class="bi bi-people me-2"></i><span class="sidebar-text">Monthly Sales entry</span>
+                            <i class="bi bi-people me-2"></i><span class="sidebar-text">Sales Man Setup</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="SalesMans" asp-action="SelesReports" title="Report">
-                            <i class="bi bi-people me-2"></i><span class="sidebar-text">Report</span>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="SalesMans" asp-action="SelesEntry" title="Seles Man Wise Monthly Sales entry">
+                            <i class="bi bi-cart-plus me-2"></i><span class="sidebar-text">Monthly Sales Entry</span>
                         </a>
                     </li>
                   
-                    
+
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="SalesMans" asp-action="SelesReports" title="Report">
+                                <i class="bi bi-file-earmark-bar-graph me-2"></i><span class="sidebar-text">Report</span>
+                            </a>
+                        </li>
+                    }
+
+
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy" title="Privacy">
                             <i class="bi bi-shield-lock me-2"></i><span class="sidebar-text">Privacy</span>
                         </a>
                     </li>
+                </ul>
 
-                  
+                <hr />
 
+                <!-- Authentication Links -->
+                <ul class="nav nav-pills flex-column">
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        // Fetch the custom user object to access FullName
+                        var currentUser = await UserManager.GetUserAsync(User);
+                        var displayName = currentUser?.FullName ?? currentUser?.UserName;
+
+                        <li class="nav-item">
+                            <span class="nav-link text-dark" title="Manage">
+                                <i class="bi bi-person-circle me-2"></i>
+                                <span class="sidebar-text">Hi, @displayName!</span>
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <form class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
+                                <button type="submit" class="nav-link text-dark btn btn-link w-100 text-start border-0" title="Logout">
+                                    <i class="bi bi-box-arrow-right me-2"></i><span class="sidebar-text">Logout</span>
+                                </button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Account" asp-action="Register" title="Register">
+                                <i class="bi bi-person-plus me-2"></i><span class="sidebar-text">Register</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Account" asp-action="Login" title="Login">
+                                <i class="bi bi-box-arrow-in-right me-2"></i><span class="sidebar-text">Login</span>
+                            </a>
+                        </li>
+                    }
 
                 </ul>
+
             </nav>
 
             <!-- Main Content Area -->
@@ -114,7 +157,6 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Script to handle Sidebar Toggling -->
