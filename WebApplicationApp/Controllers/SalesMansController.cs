@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Reporting.Map.WebForms.BingMaps;
 using Rotativa.AspNetCore;
 using WebApplicationApp.Date.Entities;
@@ -8,6 +9,9 @@ using WebApplicationApp.ReturnResponse;
 
 namespace WebApplicationApp.Controllers
 {
+
+    [Authorize]
+
     public class SalesMansController : Controller
     {
         private readonly ISalesManServices _selesservices;
@@ -126,6 +130,7 @@ namespace WebApplicationApp.Controllers
         #region SelesReports
 
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> SelesReports(int Id = 0)
         {
