@@ -1,0 +1,196 @@
+﻿@model WebApplicationApp.Models.SalesManInfoModel
+
+@{
+    ViewData["Title"] = "Salesman Entry";
+}
+
+<div class="container mt-4">
+    
+    <h2>Salesman Management</h2>
+    <hr />
+
+    <!-- Display Delete Message if any -->
+    @if (TempData["DeleteMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["DeleteMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+   
+        <!-- Form Section (Create / Update) -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">@(Model != null && Model.Id > 0 ? "Edit Salesman" : "Add New Salesman")</h5>
+                </div>
+                <div class="card-body">
+                    <form id="salesManForm">
+                        <input type="hidden" id="Id" name="Id" value="@Model?.Id" />
+
+                        <div class="mb-3">
+                            <label for="Name" class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="Name" name="Name" value="@Model?.Name" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="SmCode" class="form-label">SM Code</label>
+                            <input type="text" class="form-control" id="SmCode" name="SmCode" value="@Model?.SmCode" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Phone" class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="Phone" name="Phone" value="@Model?.Phone" />
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="IsActive" name="IsActive" value="true" @(Model?.IsActive == true ? "checked" : "") />
+                            <label class="form-check-label" for="IsActive">Is Active</label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success" id="btnSave">Save Salesman</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearSalesManForm()">Clear / Reset</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table List Section -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Salesman List</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Code</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model?.salesManInfoModel != null && Model.salesManInfoModel.Any())
+                                {
+                                    foreach (var item in Model.salesManInfoModel)
+                                    {
+                                        <tr>
+                                            <td>@item.Id</td>
+                                            <td>@item.Name</td>
+                                            <td>@item.SmCode</td>
+                                            <td>@item.Phone</td>
+                                            <td>
+                                                @if (item.IsActive == true)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <!-- Select Button to load data into form -->
+                                                <a href="@Url.Action("SalesManEntry", "SalesMans", new { Id = item.Id })" class="btn btn-sm btn-primary">Select</a>
+
+                                                <!-- Delete Button -->
+                                                <a href="@Url.Action("DeleteSalesMan", "SalesMans", new { Id = item.Id })"
+                                                   class="btn btn-sm btn-danger"
+                                                   onclick="return confirm('Are you sure you want to delete this salesman?');">Delete</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">No salesmen records found.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+
+            $('#btnSave').click(function (e) {
+                e.preventDefault();
+
+                var formData = {};
+
+                formData["Id"] = $('#Id').val() || 0;
+                formData["Name"] = $('#Name').val();
+                formData["SmCode"] = $('#SmCode').val();
+                formData["Phone"] = $('#Phone').val();
+                formData["IsActive"] = $('#IsActive').is(':checked');
+
+                $.ajax({
+                    url: '/SalesMans/CreateSalesMan',
+                    type: 'POST',
+                    data: formData,
+                    success: function (res) {
+                        var resId = res.id !== undefined ? res.id : res.Id;
+                        var resMsg = res.message !== undefined ? res.message : res.Message;
+
+                        if (resId === 0) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Warning',
+                                text: resMsg || 'Operation failed',
+                                confirmButtonText: 'OK'
+                            });
+                            return;
+                        }
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Done!',
+                            text: resMsg + '! ID: ' + resId,
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            $('#Id').val(0);
+                            $('#salesManForm')[0].reset();
+                            location.href = "/SalesMans/SalesManEntry";
+                        });
+                    },
+                    error: function (err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: err.responseText || 'Error saving data',
+                            confirmButtonText: 'Close'
+                        });
+                    }
+                });
+            });
+        });
+
+        function clearSalesManForm() {
+            $('#Id').val(0);
+            $('#Name').val('');
+            $('#SmCode').val('');
+            $('#Phone').val('');
+            $('#IsActive').prop('checked', false);
+            $('#Name').focus();
+        }
+    </script>
+}

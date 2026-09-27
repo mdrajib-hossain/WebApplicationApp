@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WebApplication</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons for the toggle icon -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WebApplication.styles.css" asp-append-version="true" />
+
+
+    <style>
+            /* Custom styles for sidebar toggling */
+            #sidebar {
+                transition: all 0.3s ease;
+            }
+
+                #sidebar.collapsed {
+                    margin-left: -100%;
+                }
+            @@media (min-width: 768px) {
+                #sidebar.collapsed {
+                    margin-left: 0;
+                    width: 70px !important;
+                }
+
+                    #sidebar.collapsed .sidebar-text {
+                        display: none;
+                    }
+
+                    #sidebar.collapsed .navbar-brand {
+                        display: none !important;
+                    }
+
+                    #sidebar.collapsed .nav-link {
+                        text-align: center;
+                        padding: 0.5rem 0;
+                    }
+            }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row min-vh-100 flex-column flex-md-row">
+
+            <!-- Sidebar Navigation -->
+            <nav id="sidebar" class="col-12 col-md-3 col-xl-2 bg-light border-end py-3 px-3 d-flex flex-column">
+
+                <!-- Sidebar Header with Brand and Toggle Icon -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a class="navbar-brand text-dark fw-bold m-0 fs-4" asp-area="" asp-controller="Home" asp-action="Index">
+                        WebApp
+                    </a>
+                    <button id="sidebarToggle" class="btn btn-sm btn-outline-secondary border-0" type="button" title="Toggle Sidebar">
+                        <i class="bi bi-list fs-4"></i>
+                    </button>
+                </div>
+
+                <hr class="mt-0" />
+
+                <!-- Navigation Links -->
+                <ul class="nav nav-pills flex-column mb-auto">
+                    
+
+                 
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="SalesMans" asp-action="SalesManEntry" title="SalesManSetup">
+                            <i class="bi bi-people me-2"></i><span class="sidebar-text">Seles Man Setup</span>
+                        </a>
+                    </li>
+                  
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="SalesMans" asp-action="SelesEntry" title="Seles Man  Wise Monthly Sales entry">
+                            <i class="bi bi-people me-2"></i><span class="sidebar-text">Monthly Sales entry</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="SalesMans" asp-action="SelesReports" title="Report">
+                            <i class="bi bi-people me-2"></i><span class="sidebar-text">Report</span>
+                        </a>
+                    </li>
+                  
+                    
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy" title="Privacy">
+                            <i class="bi bi-shield-lock me-2"></i><span class="sidebar-text">Privacy</span>
+                        </a>
+                    </li>
+
+                  
+
+
+                </ul>
+            </nav>
+
+            <!-- Main Content Area -->
+            <div class="col d-flex flex-column justify-content-between p-0">
+                <main role="main" class="p-4">
+                    @RenderBody()
+                </main>
+
+                <footer class="border-top footer text-muted p-3 bg-white">
+                    <div class="container-fluid">
+                        &copy; 2026 - WebApplication - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    </div>
+                </footer>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Script to handle Sidebar Toggling -->
+    <script>
+        $(document).ready(function () {
+        $('#sidebarToggle').on('click', function () {
+        $('#sidebar').toggleClass('collapsed');
+        });
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

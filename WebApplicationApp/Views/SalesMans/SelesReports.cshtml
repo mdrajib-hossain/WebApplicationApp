@@ -1,0 +1,266 @@
+﻿@model WebApplicationApp.Models.SalesEntryViewModel
+
+@{
+    ViewData["Title"] = "Sales Report";
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">Sales Report Management</h2>
+
+    <!-- Search Filters Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Report Filters</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="reportSalesMan" class="form-label">Sales Man</label>
+                    <select id="reportSalesMan" class="form-select">
+                        <option value="">-- All Salesmen --</option>
+                        @if (Model?.salesMansList != null)
+                        {
+                            foreach (var sm in Model.salesMansList)
+                            {
+                                <option value="@sm.Id">@sm.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="reportMonth" class="form-label">Month</label>
+                    <select id="reportMonth" class="form-select">
+                        <option value="">-- All Months --</option>
+                        <option value="January">January</option>
+                        <option value="February">February</option>
+                        <option value="March">March</option>
+                        <option value="April">April</option>
+                        <option value="May">May</option>
+                        <option value="June">June</option>
+                        <option value="July">July</option>
+                        <option value="August">August</option>
+                        <option value="September">September</option>
+                        <option value="October">October</option>
+                        <option value="November">November</option>
+                        <option value="December">December</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="reportFromDate" class="form-label">From Date</label>
+                    <input type="date" id="reportFromDate" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label for="reportToDate" class="form-label">To Date</label>
+                    <input type="date" id="reportToDate" class="form-control" />
+                </div>
+            </div>
+
+            <!-- Action Buttons Row -->
+            <div class="row mt-3">
+                <div class="col-md-12 d-flex justify-content-end gap-2 flex-wrap">
+                    <button type="button" id="btnClearReport" class="btn btn-secondary px-4">Clear</button>
+                    <button type="button" id="btnSearchReport" class="btn btn-success px-4">Search</button>
+                    <button type="button" id="btnRdlcReport" class="btn btn-primary px-3">RDLC Report</button>
+                    <button type="button" id="btnItextReport" class="btn btn-danger px-3">iTextSharp Report</button>
+
+                    <button type="button" id="btnHtmlReport" class="btn btn-info text-white px-3">HTML Report</button>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Results Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Sales Report Summary</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                <table class="table table-striped table-hover align-middle mb-0" id="reportTable">
+                    <thead class="table-light" style="position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);">
+                        <tr>
+                            <th style="width: 60px;">SL</th>
+                            <th>Sales Man Name</th>
+                            <th class="text-end">Quantity</th>
+                            <th class="text-end">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Please select your criteria and click Search.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview Bootstrap Modal -->
+    <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="reportModalLabel">
+                        📄 Sales Report Preview
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0" style="height: 75vh;">
+                    <iframe id="modalReportFrame" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary me-auto" onclick="printModalReport()">
+                        🖨️ Print
+                    </button>
+                    <a id="btnModalDownloadPdf" href="#" class="btn btn-danger">
+                        📄 Download PDF
+                    </a>
+                    <a id="btnModalDownloadExcel" href="#" class="btn btn-success">
+                        📊 Export Excel
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+@section Scripts {
+    <script>
+        // 1. Search Button Click Event
+        $('#btnSearchReport').click(function () {
+            let smId = $('#reportSalesMan').val();
+            let month = $('#reportMonth').val();
+            let fromDate = $('#reportFromDate').val();
+            let toDate = $('#reportToDate').val();
+
+            $.ajax({
+                url: '/SalesMans/GetSalesReportData',
+                type: 'GET',
+                data: { smId: smId, month: month, fromDate: fromDate, toDate: toDate },
+                success: function (res) {
+                    let tbody = $('#reportTableBody');
+                    tbody.empty();
+
+                    if (!res || res.length === 0) {
+                        tbody.append('<tr><td colspan="4" class="text-center text-muted py-4">No records found for the selected criteria.</td></tr>');
+                        return;
+                    }
+
+                    let totalQty = 0;
+                    let totalVal = 0;
+
+                    res.forEach((item, index) => {
+                        let qty = parseFloat(item.salesQuantity || 0);
+                        let val = parseFloat(item.salesValue || 0);
+
+                        totalQty += qty;
+                        totalVal += val;
+
+                        tbody.append(`
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${item.salesManName || 'Unknown'}</td>
+                                <td class="text-end">${qty}</td>
+                                <td class="text-end">${val.toFixed(2)}</td>
+                            </tr>
+                        `);
+                    });
+
+                    // Summary / Total row at the bottom
+                    tbody.append(`
+                        <tr class="table-secondary fw-bold">
+                            <td colspan="2">Total Summary</td>
+                            <td class="text-end">${totalQty}</td>
+                            <td class="text-end">${totalVal.toFixed(2)}</td>
+                        </tr>
+                    `);
+                },
+                error: function (err) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to fetch report data from server.',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
+
+        // 2. Clear Button Click Event
+        $('#btnClearReport').click(function () {
+            $('#reportSalesMan').val('');
+            $('#reportMonth').val('');
+            $('#reportFromDate').val('');
+            $('#reportToDate').val('');
+
+            $('#reportTableBody').html(`
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">Please select your criteria and click Search.</td>
+                </tr>
+            `);
+        });
+
+        // 3. RDLC Report Button Click Event (Bootstrap Modal)
+        $('#btnRdlcReport').click(function () {
+            let smId = $('#reportSalesMan').val() || '';
+            let month = $('#reportMonth').val() || '';
+            let fromDate = $('#reportFromDate').val() || '';
+            let toDate = $('#reportToDate').val() || '';
+
+            // Construct separate URLs for previewing vs downloading
+            let previewPdfUrl = `/SalesMans/DownloadRdlcReport?smId=${smId}&month=${month}&fromDate=${fromDate}&toDate=${toDate}&format=PDF&isDownload=false`;
+            let downloadPdfUrl = `/SalesMans/DownloadRdlcReport?smId=${smId}&month=${month}&fromDate=${fromDate}&toDate=${toDate}&format=PDF&isDownload=true`;
+            let excelUrl = `/SalesMans/DownloadRdlcReport?smId=${smId}&month=${month}&fromDate=${fromDate}&toDate=${toDate}&format=EXCEL&isDownload=true`;
+
+            // Inject the PREVIEW URL into the modal's iframe
+            $('#modalReportFrame').attr('src', previewPdfUrl);
+
+            // Bind the DOWNLOAD URLs to the Modal's download buttons
+            $('#btnModalDownloadPdf').attr('href', downloadPdfUrl);
+            $('#btnModalDownloadExcel').attr('href', excelUrl);
+
+            // Trigger the Bootstrap modal
+            var reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
+            reportModal.show();
+        });
+
+        // 4. Native Print function targeting the Modal's iframe
+        function printModalReport() {
+            var iframe = document.getElementById('modalReportFrame');
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        }
+
+        // 5. iTextSharp Report Button Click Event
+        $('#btnItextReport').click(function () {
+            let smId = $('#reportSalesMan').val() || '';
+            let month = $('#reportMonth').val() || '';
+            let fromDate = $('#reportFromDate').val() || '';
+            let toDate = $('#reportToDate').val() || '';
+
+            let url = `/SalesMans/GenerateITextReport?smId=${smId}&month=${month}&fromDate=${fromDate}&toDate=${toDate}`;
+            window.open(url, '_blank');
+        });
+
+
+        // 6. HTML Report Button Click Event
+        $('#btnHtmlReport').click(function () {
+            let smId = $('#reportSalesMan').val() || '';
+            let month = $('#reportMonth').val() || '';
+            let fromDate = $('#reportFromDate').val() || '';
+            let toDate = $('#reportToDate').val() || '';
+
+            // This assumes you have an action named 'GenerateHtmlReport' in your 'SalesMans' controller.
+            let url = `/SalesMans/GenerateHtmlReport?smId=${smId}&month=${month}&fromDate=${fromDate}&toDate=${toDate}`;
+            window.open(url, '_blank');
+        });
+
+
+
+    </script>
+}

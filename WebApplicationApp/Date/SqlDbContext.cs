@@ -1,0 +1,24 @@
+﻿using Microsoft.EntityFrameworkCore;
+using WebApplicationApp.Date.Entities;
+using WebApplicationApp.Models;
+
+namespace WebApplicationApp.Date
+{
+    public class SqlDbContext : DbContext 
+    {
+        public SqlDbContext(DbContextOptions<SqlDbContext> options) : base(options)
+        {
+        }
+
+       public DbSet<SalesMan> SalesMans { get; set; }
+        public DbSet<SalesMaster> SalesMasters { get; set; }
+       public DbSet<SalesDetail> SalesDetails { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+
+            modelBuilder.Entity<SalesReportDto>().HasNoKey();
+        }
+
+    }
+}

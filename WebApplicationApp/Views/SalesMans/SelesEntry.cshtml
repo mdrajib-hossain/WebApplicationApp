@@ -1,0 +1,339 @@
+﻿@model WebApplicationApp.Models.SalesEntryViewModel
+
+@{
+    ViewData["Title"] = "Sales Entry";
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">Sales Entry Management</h2>
+
+    @if (TempData["DeleteMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            @TempData["DeleteMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+
+    <form id="salesEntryForm">
+        <!-- Hidden Master ID -->
+        <input type="hidden" id="Id" name="Id" value="@Model?.Id" />
+
+        <!-- Header Information Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Entry Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="EntryDate" class="form-label">Entry Date</label>
+                        <input asp-for="EntryDate" type="date" id="EntryDate" class="form-control" value="@(Model?.EntryDate.HasValue == true ? Model.EntryDate.Value.ToString("yyyy-MM-dd") : "")" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Months" class="form-label">Month</label>
+                        <select asp-for="Months" id="Months" class="form-select" required>
+                            <option value="">-- Select Month --</option>
+                            <option value="January" selected="@(Model?.Months == "January")">January</option>
+                            <option value="February" selected="@(Model?.Months == "February")">February</option>
+                            <option value="March" selected="@(Model?.Months == "March")">March</option>
+                            <option value="April" selected="@(Model?.Months == "April")">April</option>
+                            <option value="May" selected="@(Model?.Months == "May")">May</option>
+                            <option value="June" selected="@(Model?.Months == "June")">June</option>
+                            <option value="July" selected="@(Model?.Months == "July")">July</option>
+                            <option value="August" selected="@(Model?.Months == "August")">August</option>
+                            <option value="September" selected="@(Model?.Months == "September")">September</option>
+                            <option value="October" selected="@(Model?.Months == "October")">October</option>
+                            <option value="November" selected="@(Model?.Months == "November")">November</option>
+                            <option value="December" selected="@(Model?.Months == "December")">December</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Remarks" class="form-label">Remarks</label>
+                        <input asp-for="Remarks" type="text" id="Remarks" class="form-control" value="@Model?.Remarks" placeholder="Enter remarks..." />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Salesman Selection & Dynamic Rows Section -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Salesman Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="salesManDropdown" class="form-label">Select Sales Man</label>
+                        <select id="salesManDropdown" class="form-select">
+                            <option value="">-- Select Salesman --</option>
+                            @if (Model?.salesMansList != null)
+                            {
+                                foreach (var sm in Model.salesMansList)
+                                {
+                                    <option value="@sm.Id" data-name="@sm.Name">@sm.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Rows Table -->
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="salesmanDetailsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Sales Man Name</th>
+                                <th>From Date</th>
+                                <th>To Date</th>
+                                <th>Sales Quantity</th>
+                                <th>Sales Value</th>
+                                <th class="text-center" style="width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesmanDetailsBody">
+                            @if (Model?.salesDetailsList != null && Model.salesDetailsList.Any())
+                            {
+                                foreach (var detail in Model.salesDetailsList)
+                                {
+                                    var matchedSalesman = Model.salesMansList?.FirstOrDefault(s => s.Id == detail.SmId);
+                                    var salesmanName = matchedSalesman != null ? matchedSalesman.Name : "Unknown";
+
+                                    <tr class="detail-row">
+                                        <td>
+                                            <input type="hidden" class="cls-smId" value="@detail.SmId" />
+                                            <input type="text" class="form-control-plaintext fw-bold" value="@salesmanName" readonly />
+                                        </td>
+                                        <td>
+                                            <input type="date" class="form-control cls-fromDate" value="@(detail.FromDate.HasValue ? detail.FromDate.Value.ToString("yyyy-MM-dd") : "")" required />
+                                        </td>
+                                        <td>
+                                            <input type="date" class="form-control cls-toDate" value="@(detail.ToDate.HasValue ? detail.ToDate.Value.ToString("yyyy-MM-dd") : "")" required />
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control cls-salesQty" value="@detail.SalesQuantity" placeholder="0" required />
+                                        </td>
+                                        <td>
+                                            <input type="number" step="0.01" class="form-control cls-salesVal" value="@detail.SalesValue" placeholder="0.00" required />
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-danger btn-sm remove-row">Delete</button>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Submit & Clear Buttons -->
+        <div class="mb-5">
+            <button type="submit" class="btn btn-success px-4">Submit</button>
+            <button type="button" class="btn btn-secondary px-4 ms-2" onclick="clearForm()">Clear</button>
+        </div>
+    </form>
+
+    <!-- Saved Sales Entries Section -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Saved Sales Entries</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sl</th>
+                            <th>Entry Date</th>
+                            <th>Month</th>
+                            <th>Remarks</th>
+                            <th class="text-center" style="width: 150px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model?.salesMastersList != null && Model.salesMastersList.Any())
+                        {
+                            int sl = 1; // Optional: If you want sequential numbers (1, 2, 3...) instead of the database ID
+                            foreach (var item in Model.salesMastersList)
+                            {
+                                <tr>
+                                    <td>@(sl++)</td> <!-- Or use @item.Id if you prefer showing the database ID -->
+                                    <td>@(item.EntryDate.HasValue ? item.EntryDate.Value.ToString("yyyy-MM-dd") : "")</td>
+                                    <td>@item.Months</td>
+                                    <td>@item.Remarks</td>
+                                    <td class="text-center">
+                                        <a href="@Url.Action("SelesEntry", "SalesMans", new { id = item.Id })" class="btn btn-sm btn-primary">Select</a>
+                                        <a href="@Url.Action("DeleteSalesMstDtl", "SalesMans", new { id = item.Id })" class="btn btn-sm btn-danger ms-1" onclick="return confirm('Are you sure you want to delete this entry?');">Delete</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No saved entries found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            </div>
+            </div>
+    
+
+
+
+
+
+
+</div>
+
+@section Scripts {
+   
+    <script>
+        // 1. On change of Salesman dropdown, create a new row dynamically
+        $('#salesManDropdown').change(function () {
+        let selectedOption = $(this).find(':selected');
+        let salesmanId = selectedOption.val();
+        let salesmanName = selectedOption.data('name');
+
+        if (!salesmanId) return;
+
+        // Check if this salesman is already selected in the table
+        let alreadyExists = false;
+        $('#salesmanDetailsTable tbody tr.detail-row').each(function () {
+        let existingSmId = $(this).find('.cls-smId').val();
+        if (existingSmId === salesmanId) {
+        alreadyExists = true;
+        return false;
+        }
+        });
+
+        if (alreadyExists) {
+        Swal.fire({
+        icon: 'warning',
+        title: 'Already Selected',
+        text: `${salesmanName} has already been added.`,
+        confirmButtonText: 'OK'
+        });
+        $(this).val('');
+        return;
+        }
+
+        let newRow = `
+        <tr class="detail-row">
+        <td>
+        <input type="hidden" class="cls-smId" value="${salesmanId}" />
+        <input type="text" class="form-control-plaintext fw-bold" value="${salesmanName}" readonly />
+        </td>
+        <td>
+        <input type="date" class="form-control cls-fromDate" required />
+        </td>
+        <td>
+        <input type="date" class="form-control cls-toDate" required />
+        </td>
+        <td>
+        <input type="number" class="form-control cls-salesQty" placeholder="0" required />
+        </td>
+        <td>
+        <input type="number" step="0.01" class="form-control cls-salesVal" placeholder="0.00" required />
+        </td>
+        <td class="text-center">
+        <button type="button" class="btn btn-danger btn-sm remove-row">Delete</button>
+        </td>
+        </tr>
+        `;
+
+        $('#salesmanDetailsTable tbody').append(newRow);
+        $(this).val('');
+        });
+
+        // 2. Remove row event
+        $(document).on('click', '.remove-row', function () {$(this).closest('tr').remove();
+        });
+
+        // 3. Handle Form Submit via AJAX
+        $(document).ready(function () {$('#salesEntryForm').submit(function (e) {
+        e.preventDefault();
+
+        var formData = {};
+
+        // Map Master Data
+        formData["Id"] = $('#Id').val() || 0;
+        formData["EntryDate"] = $('#EntryDate').val();
+        formData["Months"] = $('#Months').val();
+        formData["Remarks"] = $('#Remarks').val();
+
+        // Map Details Data dynamically
+        var rowCount = 0;
+        $('#salesmanDetailsTable tbody tr.detail-row').each(function (index, tr) {
+        formData["salesDetailsList[" + index + "].SmId"] = $(tr).find('.cls-smId').val();
+        formData["salesDetailsList[" + index + "].FromDate"] = $(tr).find('.cls-fromDate').val();
+        formData["salesDetailsList[" + index + "].ToDate"] = $(tr).find('.cls-toDate').val();
+        formData["salesDetailsList[" + index + "].SalesQuantity"] = $(tr).find('.cls-salesQty').val();
+        formData["salesDetailsList[" + index + "].SalesValue"] = $(tr).find('.cls-salesVal').val();
+        rowCount++;
+        });
+
+        if (rowCount === 0) {
+        Swal.fire({
+        icon: 'warning',
+        title: 'Missing Details',
+        text: 'Please add at least one salesman detail row before submitting.',
+        confirmButtonText: 'OK'
+        });
+        return;
+        }
+
+        $.ajax({
+        url: '/SalesMans/CreateSalesEntry',
+        type: 'POST',
+        data: formData,
+        success: function (res) {
+        var resId = res.id !== undefined ? res.id : res.Id;
+        var resMsg = res.message !== undefined ? res.message : res.Message;
+
+        if (resId === 0) {
+        Swal.fire({
+        icon: 'warning',
+        title: 'Warning',
+        text: resMsg || 'Operation failed',
+        confirmButtonText: 'OK'
+        });
+        return;
+        }
+
+        Swal.fire({
+        icon: 'success',
+        title: 'Done!',
+        text: resMsg || 'Data saved successfully!',
+        confirmButtonText: 'OK'
+        }).then(() => {
+        clearForm();
+        window.location.href = '/SalesMans/SelesEntry';
+        });
+        },
+        error: function (err) {
+        Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: err.responseText || 'Error saving data',
+        confirmButtonText: 'Close'
+        });
+        }
+        });
+        });
+        });
+
+        // 4. Form Reset Functionality
+        function clearForm() {
+        $('#Id').val(0);
+        $('#salesEntryForm')[0].reset();
+        $('#salesmanDetailsTable tbody').empty();
+        $('#EntryDate').focus();
+        }
+    </script>
+}
